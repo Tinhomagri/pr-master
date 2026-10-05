@@ -18,8 +18,8 @@ que casa com `main_branch_patterns`. A branch de integracao (para onde `feature/
 `fix/*` devem apontar) e a primeira de `integration_branch_priority` que existe ali.
 
 ```
-t4egroup/123log          → default=main    integracao=dev
-t4egroup/conecta_backend → default=master  integracao=develop
+<NAME PROJECT>  → default=main    integracao=dev
+ <NAME PROJECT> → default=master  integracao=develop
 ```
 
 Por isso a mesma configuracao serve para repos com convencoes diferentes. Para forcar,
@@ -42,25 +42,25 @@ gh auth status           # precisa estar logado no GitHub
 
 ```bash
 # uma PR, relatorio no terminal
-./run.sh --project django-ddd --repo t4egroup/123log review 221
+./run.sh --project  --repo  <NAME PROJECT> review 221
 
 # so os checks deterministicos (sem custo de IA, roda em segundos)
-./run.sh --project django-ddd --repo t4egroup/123log --no-ai review 221
+./run.sh --project django-ddd --repo   <NAME PROJECT> --no-ai review 221
 
 # todas as PRs abertas: tabela resumo + relatorio por PR em reports/
-./run.sh --project django-ddd --repo t4egroup/123log --save scan
+./run.sh --project django-ddd --repo   <NAME PROJECT>--save scan
 
 # so as PRs de um autor
-./run.sh --project react-ts --repo t4egroup/conecta-frontend --author caiomagri scan
+./run.sh --project react-ts --repo   <NAME PROJECT>--author caiomagri scan
 
 # saida estruturada para dashboard/script
-./run.sh --project django-ddd --repo t4egroup/123log --json review 221
+./run.sh --project django-ddd --repo  <NAME PROJECT> --json review 221
 
 # ver quais branches o bot detectou
-./run.sh --project django-ddd --repo t4egroup/123log --no-ai -v review 221
+./run.sh --project django-ddd --repo  <NAME PROJECT> --no-ai -v review 221
 
 # branches do remoto
-./run.sh --repo t4egroup/123log branches
+./run.sh --repo  <NAME PROJECT> branches
 ```
 
 | Flag | Efeito |
