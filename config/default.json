@@ -71,7 +71,7 @@
       },
       {
         "name": "test-focado",
-        "regex": "(describe|it|test)\\.only\\(|\\.skip\\(|@pytest\\.mark\\.skip",
+        "regex": "(describe|it|test)\\.only\\(|(it|test)\\.skip\\(|@pytest\\.mark\\.skip",
         "severity": "major"
       },
       {
@@ -81,7 +81,7 @@
       },
       {
         "name": "sql-concatenado",
-        "regex": "(?i)(execute|raw|cursor\\.execute)\\s*\\(\\s*([f\"']|.*%\\s*\\(|.*\\+\\s*\\w+)",
+        "regex": "(?i)(execute|executemany|raw|cursor\\.execute)\\s*\\(\\s*(f[\\\"']|[\\\"'][^\\\"']*[\\\"']\\s*(\\+|%(?!s)|\\.format\\()|\\w+\\s*\\+\\s*[\\\"'])",
         "severity": "blocker"
       },
       {
@@ -91,7 +91,7 @@
       },
       {
         "name": "conflito-nao-resolvido",
-        "regex": "^(<<<<<<<|=======$|>>>>>>>)",
+        "regex": "^(<{7}|={7}$|>{7})( |$)",
         "severity": "blocker"
       },
       {
@@ -100,6 +100,7 @@
         "severity": "major"
       }
     ],
-    "require_tests": null
+    "require_tests": null,
+    "max_diff_hits_per_file": 3
   }
 }

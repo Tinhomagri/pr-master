@@ -157,41 +157,106 @@ def run(pr, files, commits, conflicts, cfg):
     return out
 
 
+FILE_HEADER = re.compile(r"^diff --git a/(.*?) b/(.*)$")
+
+
+def _diff_sections(diff_text):
+    """Quebra um diff unificado em (path, bloco de texto) por arquivo."""
+    path = None
+    buffer = []
+    for raw in diff_text.splitlines(keepends=True):
+        match = FILE_HEADER.match(raw.rstrip("\n"))
+        if match:
+            if buffer:
+                yield path, "".join(buffer)
+            path = match.group(2)
+            buffer = [raw]
+            continue
+        buffer.append(raw)
+    if buffer:
+        yield path, "".join(buffer)
+
+
+def filter_diff(diff_text, patterns):
+    """Remove do diff os arquivos que casam com ignore_paths."""
+    if not patterns:
+        return diff_text
+    compiled = [re.compile(p) for p in patterns]
+    kept = [
+        block for path, block in _diff_sections(diff_text)
+        if path is None or not any(r.search(path) for r in compiled)
+    ]
+    return "".join(kept)
+
+
+def truncate_diff(diff_text, max_bytes):
+    raw = diff_text.encode("utf-8")
+    if len(raw) <= max_bytes:
+        return diff_text
+    return raw[:max_bytes].decode("utf-8", "ignore") + "\n\n[... diff truncado pelo bot ...]"
+
+
 def diff_patterns(diff_text, cfg):
     """Procura padroes proibidos apenas em linhas adicionadas."""
     patterns = cfg["rules"].get("forbidden_diff_patterns", [])
     if not patterns:
         return []
     compiled = [(p["name"], re.compile(p["regex"]), p.get("severity", "major")) for p in patterns]
+    max_per_file = cfg["rules"].get("max_diff_hits_per_file", 3)
     out = []
     path = None
     new_line = 0
-    seen = set()
+    hits = {}
     for raw in diff_text.splitlines():
-        if raw.startswith("+++ b/"):
-            path = raw[6:]
+        if raw.startswith("+++ "):
+            target = raw[4:].strip()
+            path = None if target == "/dev/null" else target[2:] if target[1:2] == "/" else target
+            continue
+        if raw.startswith("---") or raw.startswith("diff --git"):
             continue
         if raw.startswith("@@"):
             m = re.search(r"\+(\d+)", raw)
             new_line = int(m.group(1)) if m else 0
             continue
-        if raw.startswith("+") and not raw.startswith("+++"):
+        if raw.startswith("+"):
             content = raw[1:]
             for name, regex, severity in compiled:
-                if regex.search(content):
-                    key = (path, name)
-                    if key in seen:
-                        new_line += 1
-                        continue
-                    seen.add(key)
-                    out.append(_finding(
-                        severity, name,
-                        f"Padrao proibido encontrado: `{content.strip()[:120]}`",
-                        path=path, line=new_line,
-                    ))
+                if not regex.search(content):
+                    continue
+                key = (path, name)
+                count = hits.get(key, 0)
+                if count >= max_per_file:
+                    continue
+                hits[key] = count + 1
+                out.append(_finding(
+                    severity, name,
+                    f"Padrao proibido encontrado: `{content.strip()[:120]}`",
+                    path=path, line=new_line,
+                ))
             new_line += 1
         elif not raw.startswith("-"):
             new_line += 1
+    return out
+
+
+def normalize(findings):
+    """Descarta achado sem mensagem e forca severidade valida (saida de modelo e crua)."""
+    out = []
+    for f in findings:
+        message = (f.get("message") or "").strip()
+        if not message:
+            continue
+        f["message"] = message
+        if f.get("severity") not in SEV_ORDER:
+            f["severity"] = "minor"
+        line = f.get("line")
+        if isinstance(line, str) and line.isdigit():
+            line = int(line)
+        f["line"] = line if isinstance(line, int) and line > 0 else None
+        if not f.get("path"):
+            f["path"] = None
+            f["line"] = None
+        out.append(f)
     return out
 
 

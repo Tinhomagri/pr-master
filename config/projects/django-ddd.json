@@ -22,7 +22,7 @@
       },
       {
         "name": "sql-concatenado",
-        "regex": "(?i)cursor\\.execute\\s*\\(\\s*(f[\"']|.*%\\s*\\(|.*\\+)",
+        "regex": "(?i)(execute|executemany|raw|cursor\\.execute)\\s*\\(\\s*(f[\\\"']|[\\\"'][^\\\"']*[\\\"']\\s*(\\+|%(?!s)|\\.format\\()|\\w+\\s*\\+\\s*[\\\"'])",
         "severity": "blocker"
       },
       {

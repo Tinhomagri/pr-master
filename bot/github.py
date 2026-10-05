@@ -3,6 +3,9 @@ import shutil
 import subprocess
 
 
+TIMEOUT = 120
+
+
 class GhError(RuntimeError):
     pass
 
@@ -11,7 +14,12 @@ def _gh(args):
     """Somente leitura: nenhuma chamada deste modulo escreve no GitHub."""
     if not shutil.which("gh"):
         raise GhError("gh CLI nao instalado. veja README.")
-    proc = subprocess.run(["gh", *args], capture_output=True, text=True)
+    try:
+        proc = subprocess.run(
+            ["gh", *args], capture_output=True, text=True, timeout=TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        raise GhError(f"gh {' '.join(args)} estourou {TIMEOUT}s")
     if proc.returncode != 0:
         raise GhError(f"gh {' '.join(args)} falhou: {proc.stderr.strip()}")
     return proc.stdout
@@ -28,12 +36,9 @@ def pr(repo, number):
     return data
 
 
-def diff(repo, number, max_bytes):
-    out = _gh(["pr", "diff", str(number), "--repo", repo])
-    if len(out.encode("utf-8")) > max_bytes:
-        out = out.encode("utf-8")[:max_bytes].decode("utf-8", "ignore")
-        out += "\n\n[... diff truncado pelo bot ...]"
-    return out
+def diff(repo, number):
+    """Diff cru. Filtrar e truncar e responsabilidade do chamador."""
+    return _gh(["pr", "diff", str(number), "--repo", repo])
 
 
 def files(repo, number):

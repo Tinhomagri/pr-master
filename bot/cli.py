@@ -56,7 +56,7 @@ def analyze(args, cfg, number):
 
     findings = checks.run(pr, files, commits, conflicts, cfg)
     try:
-        diff_text = github.diff(args.repo, number, cfg["max_diff_bytes"])
+        diff_text = github.diff(args.repo, number)
     except github.GhError as exc:
         if "exceeded the maximum number of lines" not in str(exc):
             raise
@@ -64,10 +64,18 @@ def analyze(args, cfg, number):
         if args.verbose:
             print("  [diff] gh recusou por tamanho, usando o mirror", file=sys.stderr)
         diff_text = gitops.diff(mirror, number, pr["baseRefName"])
-        if len(diff_text.encode("utf-8")) > cfg["max_diff_bytes"]:
-            diff_text = diff_text.encode("utf-8")[: cfg["max_diff_bytes"]].decode(
-                "utf-8", "ignore"
-            ) + "\n\n[... diff truncado pelo bot ...]"
+
+    # ignore_paths tem de sair do diff antes do corte: lockfile e bundle minificado
+    # geram falso positivo e consomem o orcamento de bytes antes do codigo real.
+    before = len(diff_text)
+    diff_text = checks.filter_diff(diff_text, cfg["rules"].get("ignore_paths", []))
+    diff_text = checks.truncate_diff(diff_text, cfg["max_diff_bytes"])
+    if args.verbose:
+        print(
+            f"  [diff] {before} bytes -> {len(diff_text)} apos ignore_paths/corte",
+            file=sys.stderr,
+        )
+
     findings += checks.diff_patterns(diff_text, cfg)
 
     summary = None
@@ -78,8 +86,8 @@ def analyze(args, cfg, number):
             config.persona(cfg), config.project_standards(cfg),
             findings, cfg,
         )
-        findings += result.get("findings", [])
-        summary = result.get("summary")
+        findings += checks.normalize(result.get("findings", []))
+        summary = (result.get("summary") or "").strip() or None
         if args.verbose:
             print(f"  [tokens] {result['usage']}", file=sys.stderr)
 

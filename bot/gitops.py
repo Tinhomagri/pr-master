@@ -4,20 +4,30 @@ import subprocess
 from . import config
 
 
+TIMEOUT = 300
+
+
 def _git(repo_dir, args, check=True):
-    proc = subprocess.run(
-        ["git", "-C", str(repo_dir), *args], capture_output=True, text=True
-    )
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo_dir), *args],
+            capture_output=True, text=True, timeout=TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"git {' '.join(args)} estourou {TIMEOUT}s")
     if check and proc.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)}: {proc.stderr.strip()}")
     return proc
 
 
 def remote_heads(repo):
-    proc = subprocess.run(
-        ["git", "ls-remote", "--heads", f"https://github.com/{repo}.git"],
-        capture_output=True, text=True,
-    )
+    try:
+        proc = subprocess.run(
+            ["git", "ls-remote", "--heads", f"https://github.com/{repo}.git"],
+            capture_output=True, text=True, timeout=TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"git ls-remote {repo} estourou {TIMEOUT}s")
     if proc.returncode != 0:
         raise RuntimeError(f"git ls-remote {repo}: {proc.stderr.strip()}")
     return [
@@ -54,7 +64,8 @@ def mirror(repo, pr_number, main_branches):
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            ["git", "init", "--bare", "--quiet", str(path)], check=True
+            ["git", "init", "--bare", "--quiet", str(path)],
+            check=True, timeout=TIMEOUT,
         )
         _git(path, ["remote", "add", "origin", f"https://github.com/{repo}.git"])
     # fetch de uma branch inexistente aborta o fetch inteiro: filtra pelo que existe
