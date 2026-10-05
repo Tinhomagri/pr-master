@@ -51,7 +51,7 @@ gh auth status           # precisa estar logado no GitHub
 ./run.sh --project django-ddd --repo   <NAME PROJECT>--save scan
 
 # so as PRs de um autor
-./run.sh --project react-ts --repo   <NAME PROJECT>--author caiomagri scan
+./run.sh --project react-ts --repo   <NAME PROJECT>--author <NAME> scan
 
 # saida estruturada para dashboard/script
 ./run.sh --project django-ddd --repo  <NAME PROJECT> --json review 221
