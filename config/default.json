@@ -1,0 +1,105 @@
+{
+  "bot_name": "PR Master",
+  "persona": "time-t4e",
+  "model": "claude-sonnet-5-5",
+  "auto_detect_branches": true,
+  "main_branch_patterns": [
+    "main",
+    "master",
+    "dev",
+    "develop",
+    "staging",
+    "homolog(acao)?",
+    "prod(ucao|uction)?"
+  ],
+  "integration_branch_priority": [
+    "dev",
+    "develop",
+    "staging",
+    "homolog"
+  ],
+  "max_tokens": 4000,
+  "max_diff_bytes": 400000,
+  "max_findings": 6,
+  "max_findings_total": 12,
+  "standards_files": [
+    "projeto-geral.md"
+  ],
+  "rules": {
+    "skip_draft": true,
+    "pr_title_regex": null,
+    "branch_regex": "^(feat|feature|fix|hotfix|refactor|chore|docs|test|release)/[a-z0-9._-]+",
+    "commit_regex": null,
+    "base_by_branch_prefix": {
+      "feat": "integration",
+      "feature": "integration",
+      "fix": "integration",
+      "refactor": "integration",
+      "chore": "integration",
+      "docs": "integration",
+      "test": "integration",
+      "perf": "integration",
+      "hotfix": "default",
+      "release": "default"
+    },
+    "min_description_chars": 40,
+    "max_changed_files": null,
+    "max_changed_lines": null,
+    "warn_behind_commits": 30,
+    "ignore_paths": [
+      "^package-lock\\.json$",
+      "^yarn\\.lock$",
+      "^poetry\\.lock$",
+      "\\.min\\.(js|css)$",
+      "^dist/",
+      "^build/"
+    ],
+    "forbidden_paths": [
+      "^\\.env$",
+      "\\.env\\.(local|production)$",
+      "\\.pem$",
+      "\\.p12$",
+      "(^|/)id_rsa$",
+      "(^|/)credentials\\.json$",
+      "(^|/)serviceAccount.*\\.json$"
+    ],
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "(?<!\\w)(console\\.log\\(|debugger;|pdb\\.set_trace|breakpoint\\(\\)|binding\\.pry)",
+        "severity": "major"
+      },
+      {
+        "name": "test-focado",
+        "regex": "(describe|it|test)\\.only\\(|\\.skip\\(|@pytest\\.mark\\.skip",
+        "severity": "major"
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(api[_-]?key|secret|password|passwd|token|authorization)\\s*[:=]\\s*[\"'][^\"'\\s$]{12,}[\"']",
+        "severity": "blocker"
+      },
+      {
+        "name": "sql-concatenado",
+        "regex": "(?i)(execute|raw|cursor\\.execute)\\s*\\(\\s*([f\"']|.*%\\s*\\(|.*\\+\\s*\\w+)",
+        "severity": "blocker"
+      },
+      {
+        "name": "print-em-producao",
+        "regex": "^\\s*print\\(",
+        "severity": "minor"
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<<<<<<<|=======$|>>>>>>>)",
+        "severity": "blocker"
+      },
+      {
+        "name": "url-hardcoded",
+        "regex": "https?://(localhost|127\\.0\\.0\\.1|\\d+\\.\\d+\\.\\d+\\.\\d+)",
+        "severity": "major"
+      }
+    ],
+    "require_tests": null
+  }
+}

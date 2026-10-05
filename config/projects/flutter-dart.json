@@ -1,0 +1,69 @@
+{
+  "standards_files": [
+    "projeto-geral.md",
+    "flutter-dart.md"
+  ],
+  "integration_branch_priority": [
+    "develop",
+    "dev",
+    "staging",
+    "homolog"
+  ],
+  "rules": {
+    "require_tests": {
+      "source_regex": "/lib/.*\\.dart$",
+      "test_regex": "/test/|_test\\.dart$",
+      "severity": "major"
+    },
+    "ignore_paths": [
+      "pubspec\\.lock$",
+      "\\.g\\.dart$",
+      "\\.freezed\\.dart$",
+      "^dist/",
+      "^build/"
+    ],
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "(?<!\\w)(print\\(|debugPrint\\(|log\\(['\"])",
+        "severity": "major"
+      },
+      {
+        "name": "analyzer-silenciado",
+        "regex": "//\\s*ignore(_for_file)?:",
+        "severity": "major"
+      },
+      {
+        "name": "teste-focado-ou-pulado",
+        "regex": "(solo:\\s*true|skip:\\s*true)",
+        "severity": "major"
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(apiKey|api[_-]?key|secret|password|senha|token)\\s*[:=]\\s*(const\\s+)?[\"'][^\"'\\s$]{12,}[\"']",
+        "severity": "blocker"
+      },
+      {
+        "name": "url-hardcoded",
+        "regex": "https?://(localhost|10\\.0\\.2\\.2|127\\.0\\.0\\.1|\\d+\\.\\d+\\.\\d+\\.\\d+)",
+        "severity": "major"
+      },
+      {
+        "name": "excecao-engolida",
+        "regex": "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+        "severity": "major"
+      },
+      {
+        "name": "cast-dynamic",
+        "regex": "\\bas\\s+dynamic\\b",
+        "severity": "minor"
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<<<<<<<|>>>>>>>)",
+        "severity": "blocker"
+      }
+    ]
+  },
+  "max_diff_bytes": 1200000
+}

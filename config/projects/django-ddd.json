@@ -1,0 +1,55 @@
+{
+  "standards_files": [
+    "projeto-geral.md",
+    "django-ddd.md"
+  ],
+  "rules": {
+    "require_tests": {
+      "source_regex": "^(src|apps|core|domain|application|infrastructure)/.*\\.py$",
+      "test_regex": "(^|/)(tests?)/|_test\\.py$|^test_.*\\.py$",
+      "severity": "major"
+    },
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "(?<!\\w)(pdb\\.set_trace|breakpoint\\(\\)|ipdb)",
+        "severity": "major"
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(api[_-]?key|secret|password|token)\\s*=\\s*[\"'][^\"'\\s$]{12,}[\"']",
+        "severity": "blocker"
+      },
+      {
+        "name": "sql-concatenado",
+        "regex": "(?i)cursor\\.execute\\s*\\(\\s*(f[\"']|.*%\\s*\\(|.*\\+)",
+        "severity": "blocker"
+      },
+      {
+        "name": "orm-sem-select-related",
+        "regex": "\\.objects\\.all\\(\\)\\s*$",
+        "severity": "minor"
+      },
+      {
+        "name": "regra-de-negocio-na-view",
+        "regex": "class \\w+(View|ViewSet)\\b.*:.*\\.objects\\.(create|update|delete)",
+        "severity": "major"
+      },
+      {
+        "name": "migration-com-dado",
+        "regex": "RunPython\\(",
+        "severity": "minor"
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<<<<<<<|>>>>>>>)",
+        "severity": "blocker"
+      },
+      {
+        "name": "print-em-producao",
+        "regex": "^\\s*print\\(",
+        "severity": "minor"
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "standards_files": [
+    "projeto-geral.md",
+    "react-ts.md"
+  ],
+  "rules": {
+    "require_tests": null,
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "console\\.(log|debug)\\(|debugger;",
+        "severity": "major"
+      },
+      {
+        "name": "any-explicito",
+        "regex": ":\\s*any\\b|as any\\b",
+        "severity": "major"
+      },
+      {
+        "name": "ts-ignore",
+        "regex": "@ts-(ignore|nocheck)",
+        "severity": "major"
+      },
+      {
+        "name": "test-focado",
+        "regex": "(describe|it|test)\\.only\\(",
+        "severity": "major"
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(apiKey|secret|password|token)\\s*[:=]\\s*[\"'][^\"'\\s$]{12,}[\"']",
+        "severity": "blocker"
+      },
+      {
+        "name": "url-hardcoded",
+        "regex": "https?://(localhost|127\\.0\\.0\\.1|\\d+\\.\\d+\\.\\d+\\.\\d+)",
+        "severity": "major"
+      },
+      {
+        "name": "dangerously-set-html",
+        "regex": "dangerouslySetInnerHTML",
+        "severity": "major"
+      },
+      {
+        "name": "useeffect-sem-deps",
+        "regex": "useEffect\\(\\s*\\(\\)\\s*=>\\s*\\{[^}]*\\}\\s*\\)\\s*;",
+        "severity": "major"
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<<<<<<<|>>>>>>>)",
+        "severity": "blocker"
+      }
+    ]
+  }
+}
