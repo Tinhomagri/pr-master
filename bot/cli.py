@@ -1,11 +1,10 @@
 import argparse
 import json
 import re
-import subprocess
 import sys
 from datetime import date
 
-from . import checks, config, github, gitops, report
+from . import checks, config, expert, github, gitops, report
 
 
 def _load_env():
@@ -55,6 +54,17 @@ def analyze(args, cfg, number):
     commits = gitops.commit_subjects(mirror, number, pr["baseRefName"])
 
     findings = checks.run(pr, files, commits, conflicts, cfg)
+
+    if cfg["rules"].get("detect_stacked_prs", True) and not getattr(args, "no_stack", False):
+        try:
+            others = [
+                item for item in (getattr(args, "_open_prs", None) or github.open_prs(args.repo))
+                if item["number"] != number and item["baseRefName"] == pr["baseRefName"]
+            ]
+            findings += expert.stacked(pr, gitops.contained_prs(mirror, number, others), cfg)
+        except (github.GhError, RuntimeError) as exc:
+            if args.verbose:
+                print(f"  [empilhamento] nao verificado: {exc}", file=sys.stderr)
     try:
         diff_text = github.diff(args.repo, number)
     except github.GhError as exc:
@@ -77,6 +87,7 @@ def analyze(args, cfg, number):
         )
 
     findings += checks.diff_patterns(diff_text, cfg)
+    findings += expert.run(pr, diff_text, cfg)
 
     summary = None
     if not args.no_ai:
@@ -119,13 +130,14 @@ def cmd_review(args):
         }, ensure_ascii=False, indent=2))
         return 0
 
-    body = report.render(pr, findings, conflicts, summary, cfg)
+    body = report.render(pr, findings, conflicts, summary, cfg, strict=args.strict)
     print(body)
     if args.save:
         print(f"\n→ {_save(args, cfg, pr, body)}", file=sys.stderr)
 
-    blockers = sum(1 for f in findings if f["severity"] == "blocker")
-    return 1 if (blockers and args.fail_on_blocker) else 0
+    blocking = {"blocker", "major"} if args.strict else {"blocker"}
+    hit = sum(1 for f in findings if f["severity"] in blocking)
+    return 1 if (hit and args.fail_on_blocker) else 0
 
 
 def cmd_scan(args):
@@ -135,20 +147,15 @@ def cmd_scan(args):
     if cfg.get("auto_detect_branches", True) and not args.default_branch:
         args.default_branch = github.default_branch(args.repo)
 
-    query = ["pr", "list", "--repo", args.repo, "--state", "open",
-             "--json", "number,author,isDraft,title", "--limit", str(args.limit)]
-    if args.author:
-        query += ["--author", args.author]
-    prs = json.loads(
-        subprocess.run(["gh", *query], capture_output=True, text=True, check=True).stdout
-    )
+    prs = github.open_prs(args.repo, limit=args.limit, author=args.author)
+    args._open_prs = prs
     rows, rc = [], 0
     for item in prs:
         if item["isDraft"] and cfg["rules"].get("skip_draft"):
             continue
         print(f"analisando PR #{item['number']} …", file=sys.stderr)
         pr, files, conflicts, findings, summary = analyze(args, cfg, item["number"])
-        body = report.render(pr, findings, conflicts, summary, cfg)
+        body = report.render(pr, findings, conflicts, summary, cfg, strict=args.strict)
         saved = _save(args, cfg, pr, body) if args.save else None
         rows.append({
             "number": pr["number"], "url": pr["url"],
@@ -156,8 +163,10 @@ def cmd_scan(args):
             "head": pr["headRefName"], "base": pr["baseRefName"],
             "conflicts": conflicts, "findings": findings,
             "summary": summary, "report": str(saved) if saved else None,
+            "strict": args.strict,
         })
-        if any(f["severity"] == "blocker" for f in findings):
+        blocking = {"blocker", "major"} if args.strict else {"blocker"}
+        if any(f["severity"] in blocking for f in findings):
             rc = 1
 
     if not rows:
@@ -195,6 +204,13 @@ def main(argv=None):
     parser.add_argument("--out", default="reports", help="pasta de saida (default: reports)")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--fail-on-blocker", action="store_true")
+    parser.add_argument(
+        "--strict", action="store_true",
+        help="exigente: achado importante tambem reprova a PR (veredito e exit code)",
+    )
+    parser.add_argument(
+        "--no-stack", action="store_true", help="pula a deteccao de PR empilhada",
+    )
     parser.add_argument("--author", help="filtra PRs deste autor (apenas em scan)")
     parser.add_argument("--default-branch", help="forca a branch principal (pula a deteccao)")
 

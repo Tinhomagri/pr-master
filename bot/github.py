@@ -50,6 +50,16 @@ def files(repo, number):
     return [json.loads(line) for line in out.splitlines() if line.strip()]
 
 
+def open_prs(repo, limit=30, author=None):
+    args = [
+        "pr", "list", "--repo", repo, "--state", "open", "--limit", str(limit),
+        "--json", "number,title,author,headRefName,baseRefName,isDraft",
+    ]
+    if author:
+        args += ["--author", author]
+    return json.loads(_gh(args))
+
+
 def default_branch(repo):
     return json.loads(
         _gh(["repo", "view", repo, "--json", "defaultBranchRef"])

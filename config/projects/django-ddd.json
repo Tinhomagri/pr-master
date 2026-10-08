@@ -13,12 +13,26 @@
       {
         "name": "debug-leftover",
         "regex": "(?<!\\w)(pdb\\.set_trace|breakpoint\\(\\)|ipdb)",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "possivel-segredo",
         "regex": "(?i)(api[_-]?key|secret|password|token)\\s*=\\s*[\"'][^\"'\\s$]{12,}[\"']",
-        "severity": "blocker"
+        "severity": "blocker",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "sql-concatenado",
@@ -48,7 +62,14 @@
       {
         "name": "print-em-producao",
         "regex": "^\\s*print\\(",
-        "severity": "minor"
+        "severity": "minor",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       }
     ]
   }

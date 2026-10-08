@@ -26,22 +26,50 @@
       {
         "name": "debug-leftover",
         "regex": "(?<!\\w)(print\\(|debugPrint\\(|log\\(['\"])",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "analyzer-silenciado",
         "regex": "//\\s*ignore(_for_file)?:",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "teste-focado-ou-pulado",
         "regex": "(solo:\\s*true|skip:\\s*true)",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "possivel-segredo",
         "regex": "(?i)(apiKey|api[_-]?key|secret|password|senha|token)\\s*[:=]\\s*(const\\s+)?[\"'][^\"'\\s$]{12,}[\"']",
-        "severity": "blocker"
+        "severity": "blocker",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "url-hardcoded",

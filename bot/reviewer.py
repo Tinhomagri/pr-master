@@ -9,6 +9,19 @@ Reporte APENAS achados reais e acionaveis. Nao elogie, nao resuma a PR,
 nao comente estilo que um linter ja pega, nao sugira refactor fora do escopo
 da PR, nao invente arquivos ou linhas que nao estao no diff.
 
+O bot ja roda sozinho, antes de voce, os checks deterministicos abaixo. NAO os repita
+e NAO gaste achado com eles: conflito de merge e defasagem da base, PR empilhada,
+segredo/debug/SQL concatenado, teste faltando para codigo novo, contador de versao sem
+lock, idempotencia sem reserva, N+1 em laco, transacao longa com lock, chamada HTTP sem
+timeout, excecao engolida, payload de lista sem limite, migration/env/dependencia fora da
+descricao e reformatacao em massa.
+
+Procure o que SO um humano experiente pega: regra de negocio errada, estado que regride,
+escopo de tenant/usuario ausente na consulta, contrato de API incompativel com o cliente,
+dado sensivel exposto na resposta, maquina de estados com transicao faltando, ordem de
+deploy entre repositorios, erro tratado no lugar errado, teste que nao exercita o caminho
+de falha.
+
 Severidades:
 - blocker: quebra o build/producao, falha de seguranca, perda de dados, viola regra obrigatoria do projeto
 - major: bug provavel, risco de performance (N+1, query sem indice), contrato de API quebrado, padrao arquitetural violado

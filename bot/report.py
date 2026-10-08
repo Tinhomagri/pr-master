@@ -20,7 +20,30 @@ def badge(findings):
     return hit or "✅ limpo"
 
 
-def render(pr, findings, conflicts, summary, cfg):
+VERDICT_RULES = (
+    ("blocker", "🔴", "NAO APTA PARA MERGE", "bloqueante(s) para resolver antes de qualquer merge"),
+    ("major", "🟠", "APTA COM RESSALVAS", "ponto(s) importante(s): decida com o autor antes de mergear"),
+    ("minor", "🟡", "APTA", "ponto(s) menor(es), nao travam o merge"),
+)
+
+
+def verdict(findings, conflicts, pr, strict=False):
+    """Resposta a pergunta que importa: pode mergear?"""
+    base_conflict = any(
+        c["status"] == "conflict" and c["branch"] == pr["baseRefName"] for c in conflicts
+    )
+    if base_conflict:
+        return "🔴", "NAO APTA PARA MERGE", f"conflito com a base `{pr['baseRefName']}` — resolva o merge primeiro"
+    c = counts(findings)
+    for severity, icon, label, tail in VERDICT_RULES:
+        if c[severity]:
+            if severity == "major" and strict:
+                return "🔴", "NAO APTA PARA MERGE", f"{c[severity]} {tail} (modo --strict)"
+            return icon, label, f"{c[severity]} {tail}"
+    return "✅", "APTA PARA MERGE", "nenhum desvio nos checks deterministicos"
+
+
+def render(pr, findings, conflicts, summary, cfg, strict=False):
     name = cfg.get("bot_name", "PR Master")
     author = pr["author"].get("login", "?")
     lines = [
@@ -34,6 +57,9 @@ def render(pr, findings, conflicts, summary, cfg):
         f"- link: {pr['url']}",
         "",
     ]
+    icon, label, reason = verdict(findings, conflicts, pr, strict=strict)
+    lines += [f"## Veredito: {icon} {label}", "", f"{reason}.", ""]
+
     if summary:
         lines += [f"> {summary}", ""]
 
@@ -72,12 +98,17 @@ def render(pr, findings, conflicts, summary, cfg):
                 continue
             lines.append(f"### {ICON[severity]} {LABEL[severity]}")
             for finding in group:
-                origin = "check" if finding.get("source") == "check" else "ia"
+                origin = {"check": "check", "expert": "risco"}.get(finding.get("source"), "ia")
                 lines.append(
                     f"- `{finding['rule']}`{_location(finding)} — {finding['message']} _({origin})_"
                 )
             lines.append("")
 
+    from .expert import CHECKLIST
+
+    lines.append("## O que foi conferido")
+    lines += [f"- {item}" for item in CHECKLIST]
+    lines.append("")
     lines.append("---")
     lines.append(
         f"_padrao `{cfg.get('persona')}` · modelo `{cfg['model']}` · "
@@ -89,12 +120,17 @@ def render(pr, findings, conflicts, summary, cfg):
 def digest(rows, cfg):
     """Resumo de varias PRs, uma linha cada."""
     name = cfg.get("bot_name", "PR Master")
-    lines = [f"# {name} — resumo", "", "| PR | autor | branch → base | achados | conflito |", "|---|---|---|---|---|"]
+    lines = [
+        f"# {name} — resumo", "",
+        "| PR | autor | branch → base | achados | veredito |", "|---|---|---|---|---|",
+    ]
     for row in rows:
-        conflicted = [c["branch"] for c in row["conflicts"] if c["status"] == "conflict"]
+        icon, label, _ = verdict(
+            row["findings"], row["conflicts"],
+            {"baseRefName": row["base"]}, strict=row.get("strict", False),
+        )
         lines.append(
             f"| [#{row['number']}]({row['url']}) | @{row['author']} | "
-            f"`{row['head']}` → `{row['base']}` | {badge(row['findings'])} | "
-            f"{'❌ ' + ', '.join(conflicted) if conflicted else '✅'} |"
+            f"`{row['head']}` → `{row['base']}` | {badge(row['findings'])} | {icon} {label} |"
         )
     return "\n".join(lines)

@@ -126,10 +126,19 @@ def run(pr, files, commits, conflicts, cfg):
         if item["status"] == "conflict":
             listed = ", ".join(f"`{f}`" for f in item["files"][:10])
             extra = "" if len(item["files"]) <= 10 else f" (+{len(item['files']) - 10})"
-            out.append(_finding(
-                "blocker", "merge-conflict",
-                f"Conflita com `{item['branch']}` em {len(item['files'])} arquivo(s): {listed}{extra}.",
-            ))
+            # Só a base da PR bloqueia: conflito com outra branch principal é
+            # divergência entre elas (ex.: develop ja conflita com main), nao desta PR.
+            if item["branch"] == pr["baseRefName"]:
+                out.append(_finding(
+                    "blocker", "merge-conflict",
+                    f"Conflita com a base `{item['branch']}` em {len(item['files'])} arquivo(s): {listed}{extra}.",
+                ))
+            else:
+                out.append(_finding(
+                    "minor", "merge-conflict",
+                    f"Conflita com `{item['branch']}` em {len(item['files'])} arquivo(s), "
+                    f"que nao e a base desta PR: {listed}{extra}.",
+                ))
         elif item["status"] == "error":
             out.append(_finding(
                 "minor", "merge-conflict",
@@ -201,7 +210,15 @@ def diff_patterns(diff_text, cfg):
     patterns = cfg["rules"].get("forbidden_diff_patterns", [])
     if not patterns:
         return []
-    compiled = [(p["name"], re.compile(p["regex"]), p.get("severity", "major")) for p in patterns]
+    compiled = [
+        (
+            p["name"],
+            re.compile(p["regex"]),
+            p.get("severity", "major"),
+            [re.compile(x) for x in p.get("skip_paths", [])],
+        )
+        for p in patterns
+    ]
     max_per_file = cfg["rules"].get("max_diff_hits_per_file", 3)
     out = []
     path = None
@@ -220,8 +237,11 @@ def diff_patterns(diff_text, cfg):
             continue
         if raw.startswith("+"):
             content = raw[1:]
-            for name, regex, severity in compiled:
+            for name, regex, severity, skip in compiled:
                 if not regex.search(content):
+                    continue
+                # senha de fixture em teste nao e segredo: nao gastar bloqueante com isso
+                if path and any(r.search(path) for r in skip):
                     continue
                 key = (path, name)
                 count = hits.get(key, 0)

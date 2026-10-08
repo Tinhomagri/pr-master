@@ -79,6 +79,34 @@ def mirror(repo, pr_number, main_branches):
     return path
 
 
+def fetch_pr_heads(repo_dir, numbers):
+    """Traz os heads de outras PRs abertas para comparar ancestralidade."""
+    numbers = [n for n in numbers]
+    if not numbers:
+        return []
+    refspecs = [f"+refs/pull/{n}/head:refs/pr/{n}" for n in numbers]
+    proc = _git(repo_dir, ["fetch", "--quiet", "origin", *refspecs], check=False)
+    if proc.returncode != 0:
+        return []
+    return numbers
+
+
+def contained_prs(repo_dir, pr_number, others):
+    """PRs abertas cujo head ja e ancestral desta: definem a ordem de merge."""
+    head = f"refs/pr/{pr_number}"
+    fetched = set(fetch_pr_heads(repo_dir, [o["number"] for o in others]))
+    inside = []
+    for other in others:
+        if other["number"] not in fetched:
+            continue
+        ref = f"refs/pr/{other['number']}"
+        if _git(repo_dir, ["rev-parse", "--verify", "--quiet", ref], check=False).returncode != 0:
+            continue
+        if _git(repo_dir, ["merge-base", "--is-ancestor", ref, head], check=False).returncode == 0:
+            inside.append(other)
+    return inside
+
+
 def conflicts(repo_dir, pr_number, main_branches):
     """Merge a seco (sem working tree) do head da PR contra cada branch principal."""
     head = f"refs/pr/{pr_number}"

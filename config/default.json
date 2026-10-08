@@ -67,17 +67,38 @@
       {
         "name": "debug-leftover",
         "regex": "(?<!\\w)(console\\.log\\(|debugger;|pdb\\.set_trace|breakpoint\\(\\)|binding\\.pry)",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "test-focado",
         "regex": "(describe|it|test)\\.only\\(|(it|test)\\.skip\\(|@pytest\\.mark\\.skip",
-        "severity": "major"
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "possivel-segredo",
         "regex": "(?i)(api[_-]?key|secret|password|passwd|token|authorization)\\s*[:=]\\s*[\"'][^\"'\\s$]{12,}[\"']",
-        "severity": "blocker"
+        "severity": "blocker",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "sql-concatenado",
@@ -87,7 +108,14 @@
       {
         "name": "print-em-producao",
         "regex": "^\\s*print\\(",
-        "severity": "minor"
+        "severity": "minor",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       },
       {
         "name": "conflito-nao-resolvido",
@@ -98,9 +126,53 @@
         "name": "url-hardcoded",
         "regex": "https?://(localhost|127\\.0\\.0\\.1|\\d+\\.\\d+\\.\\d+\\.\\d+)",
         "severity": "major"
+      },
+      {
+        "name": "auth-desligada",
+        "regex": "(?i)(permission_classes\\s*=\\s*\\[\\s*AllowAny|csrf_exempt|verify\\s*=\\s*False|rejectUnauthorized\\s*:\\s*false|@csrf_exempt)",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
+      },
+      {
+        "name": "comparacao-de-segredo-insegura",
+        "regex": "(?i)(signature|hmac|token|secret)\\w*\\s*==\\s*",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
+      },
+      {
+        "name": "migracao-irreversivel",
+        "regex": "RunPython\\([^,)]+\\)\\s*$|reverse_code\\s*=\\s*None",
+        "severity": "major"
+      },
+      {
+        "name": "delete-em-massa",
+        "regex": "\\.objects\\.all\\(\\)\\.delete\\(\\)|\\.delete\\(\\)\\s*$|TRUNCATE |DROP TABLE",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|spec|__tests__)/",
+          "(^|/)test_[^/]*\\.py$",
+          "_(test|spec)\\.(py|dart|ts|tsx|js)$",
+          "\\.(test|spec)\\.[tj]sx?$",
+          "(^|/)conftest\\.py$"
+        ]
       }
     ],
     "require_tests": null,
-    "max_diff_hits_per_file": 3
+    "max_diff_hits_per_file": 3,
+    "expert_checks": true,
+    "detect_stacked_prs": true,
+    "churn_file_threshold": 3
   }
 }

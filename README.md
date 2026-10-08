@@ -3,12 +3,18 @@
 Analisa Pull Requests e entrega o relatorio **no seu terminal ou em arquivo local**.
 Nao comenta, nao aprova, nao escreve nada no GitHub — so leitura.
 
-Checa duas coisas:
+Checa tres coisas:
 
 1. **A PR nao sai do padrao do projeto** — base errada para o prefixo da branch,
    descricao vazia, codigo fora da pasta do dominio, debug esquecido, segredo no diff,
    SQL concatenado, teste faltando, arquivo de infra entrando sem motivo.
-2. **Nao ha conflito com as branches principais** — merge a seco (`git merge-tree`) do
+2. **Nao ha risco classico de producao** (`bot/expert.py`, deterministico) — contador/versao
+   calculado sem lock, chave de idempotencia conferida sem reservar a linha antes da chamada
+   externa, N+1 dentro de laco, transacao com lock segurando IO pesado, chamada HTTP sem
+   timeout, excecao engolida, lista de entrada sem limite, migration/variavel de ambiente/
+   dependencia que nao estao na descricao, reformatacao em massa misturada com a feature e
+   PR empilhada sobre outra PR aberta (ordem de merge).
+3. **Nao ha conflito com as branches principais** — merge a seco (`git merge-tree`) do
    head da PR contra as branches principais, listando os arquivos em conflito e quantos
    commits a branch esta defasada.
 
@@ -72,6 +78,8 @@ gh auth status           # precisa estar logado no GitHub
 | `--model claude-opus-5` | analise mais profunda |
 | `--default-branch X` | força a branch principal, pula a deteccao |
 | `--fail-on-blocker` | exit 1 se houver bloqueante |
+| `--strict` | exigente: achado importante tambem reprova (veredito e exit code) |
+| `--no-stack` | pula a deteccao de PR empilhada |
 | `-v` | mostra tokens gastos |
 
 ## Adicionar um projeto
