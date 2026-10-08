@@ -82,6 +82,20 @@ gh auth status           # precisa estar logado no GitHub
 | `--no-stack` | pula a deteccao de PR empilhada |
 | `-v` | mostra tokens gastos |
 
+## Perfis prontos
+
+| `--project` | stack | padroes |
+|---|---|---|
+| `django-ddd` | Python + Django + DDD | `standards/django-ddd.md` |
+| `java-spring` | Java + Spring Boot | `standards/java-spring.md` |
+| `node-api` | Node + TypeScript (API) | `standards/node-api.md` |
+| `react-ts` | React + TypeScript | `standards/react-ts.md` |
+| `flutter-dart` | Flutter + Dart | `standards/flutter-dart.md` |
+
+As heuristicas de risco (`bot/expert.py`) rodam em qualquer perfil e conhecem os idiomas
+das tres stacks de backend: JPA/`@Transactional`/`RestTemplate` em Java, Prisma/TypeORM/
+`fetch`/`axios` em Node e ORM/`transaction.atomic`/`requests` em Python.
+
 ## Adicionar um projeto
 
 1. `cp config/projects/django-ddd.json config/projects/meu-projeto.json`

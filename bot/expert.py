@@ -16,22 +16,31 @@ SOURCE = "expert"
 
 TEST_PATH = re.compile(
     r"(^|/)(tests?|spec|__tests__)/|(^|/)test_[^/]*\.py$|_(test|spec)\.(py|dart|ts|tsx|js)$"
-    r"|\.(test|spec)\.[tj]sx?$|(^|/)conftest\.py$"
+    r"|\.(test|spec)\.[mc]?[tj]sx?$|(^|/)conftest\.py$"
+    r"|(^|/)src/test/(java|kotlin|resources)/|(Test|Tests|IT)\.(java|kt)$"
 )
-CODE_PATH = re.compile(r"\.(py|ts|tsx|js|jsx|dart|go|rb|java|kt)$")
-MIGRATION_PATH = re.compile(r"(^|/)migrations?/|\.sql$")
+CODE_PATH = re.compile(r"\.(py|ts|tsx|js|jsx|mjs|cjs|mts|cts|dart|go|rb|java|kt)$")
+MIGRATION_PATH = re.compile(
+    r"(^|/)migrations?/|\.sql$|(^|/)db/(migration|changelog)/"
+    r"|(^|/)(changelog|liquibase)[^/]*\.(xml|ya?ml|json)$"
+)
 DEP_MANIFEST = re.compile(
-    r"(^|/)(requirements[^/]*\.txt|pyproject\.toml|Pipfile|package\.json|pubspec\.yaml|go\.mod|Gemfile)$"
+    r"(^|/)(requirements[^/]*\.txt|pyproject\.toml|Pipfile|package\.json|pubspec\.yaml|go\.mod|Gemfile"
+    r"|pom\.xml|build\.gradle(\.kts)?|settings\.gradle(\.kts)?|libs\.versions\.toml)$"
 )
 INFRA_PATH = re.compile(
     r"(^|/)(docker-compose[^/]*\.ya?ml|Dockerfile[^/]*|Makefile|nginx[^/]*\.conf|Procfile"
     r"|\.github/workflows/[^/]+|k8s/[^/]+|(terraform|helm)/[^/]+|celery[_-]?settings\.py"
-    r"|ruff\.toml|\.eslintrc[^/]*|\.prettierrc[^/]*|tsconfig[^/]*\.json|\.env\.example)$"
+    r"|ruff\.toml|\.eslintrc[^/]*|\.prettierrc[^/]*|tsconfig[^/]*\.json|\.env\.example"
+    r"|application[^/]*\.(ya?ml|properties)|bootstrap[^/]*\.(ya?ml|properties)"
+    r"|ecosystem\.config\.[cm]?js|nest-cli\.json|\.npmrc)$"
 )
 
 LOCK = re.compile(
     r"select_for_update|with_for_update|FOR UPDATE|get_or_create|update_or_create"
     r"|advisory_lock|SELECT \.\.\. FOR|\.lock\(|Lock\(|F\("
+    r"|@Lock\(|PESSIMISTIC_(WRITE|READ)|setLockMode|LockModeType|@Version\b"
+    r"|synchronized|ReentrantLock|Mutex\(|Semaphore\(|redlock|\.acquire\("
 )
 VERSION_CALC = re.compile(
     r"(?i)(aggregate\([^)]*Max\(|Max\(\s*[\"']?(version|numero|number|sequence|seq)"
@@ -48,22 +57,45 @@ EXTERNAL_WRITE = re.compile(
 QUERY_CALL = re.compile(
     r"\.objects\.|\.filter\(|\.exclude\(|\.aggregate\(|\.count\(\)|\.exists\(\)|\.save\(\)"
     r"|\.delete\(\)|\.create\(|cursor\.execute|await \w+\.(find|get|fetch|query)"
+    r"|(repository|repo|entityManager|em|jdbcTemplate|prisma|knex|queryRunner|manager|db)\s*\.\s*"
+    r"(\w+\s*\.\s*)?"
+    r"(find\w*|save\w*|delete\w*|update\w*|insert\w*|count|exists\w*|query\w*|create\w*|upsert|persist|merge|remove)\s*\("
+    r"|createQuery\(|createNativeQuery\(|\$queryRaw|\$executeRaw"
 )
 LOOP_START = re.compile(r"^(\s*)(for |while |.*\.forEach\(|.*\.map\()")
 HEAVY_IO = re.compile(
     r"\.read\(\)|\.open\(|open\(|loadtxt|imread|requests\.|httpx\.|urlopen\(|range\(\s*(size|len|total)"
+    r"|readFileSync|Files\.read|restTemplate\.|webClient\.|HttpClient|axios\.|fetch\("
 )
-HTTP_CALL = re.compile(r"(requests|httpx|session|client)\.(get|post|put|patch|delete|request)\(|urlopen\(")
-TIMEOUT_HINT = re.compile(r"timeout|deadline|Timeout")
-LIST_FIELD = re.compile(r"ListField\(|ArrayField\(|ListSerializer\(")
-LIST_BOUND = re.compile(r"max_length|max_items|max_num|max_count|maxItems")
+HTTP_CALL = re.compile(
+    r"(requests|httpx|session|client)\.(get|post|put|patch|delete|request)\(|urlopen\("
+    r"|axios\s*(\.(get|post|put|patch|delete|request))?\s*\(|(?<!\w)fetch\s*\("
+    r"|restTemplate\.(getFor\w+|postFor\w+|put|delete|exchange|execute)\s*\("
+    r"|webClient\s*\.\s*(get|post|put|patch|delete|method)\s*\(|\.newCall\s*\("
+)
+TIMEOUT_HINT = re.compile(
+    r"timeout|deadline|Timeout|AbortSignal|AbortController|signal\s*:"
+    r"|responseTimeout|connectTimeout|readTimeout"
+)
+LIST_FIELD = re.compile(r"ListField\(|ArrayField\(|ListSerializer\(|z\.array\(|@RequestBody\s+List<")
+# Escopo transacional nas tres stacks (Django, Spring, Prisma/TypeORM/Knex).
+TX_SCOPE = re.compile(
+    r"transaction\.atomic|@Transactional|\$transaction\(|\.transaction\(|beginTransaction\("
+)
+LIST_BOUND = re.compile(
+    r"max_length|max_items|max_num|max_count|maxItems|@Size\(|@ArrayMaxSize|\.max\(\s*\d"
+)
 TODO = re.compile(r"(?<![A-Za-z])(TODO|FIXME|XXX|HACK)(?![A-Za-z])")
 ENV_VAR = re.compile(
     r"os\.environ(?:\.get)?[\(\[]\s*[\"'](\w+)[\"']|process\.env\.(\w+)"
     r"|String\.fromEnvironment\(\s*[\"'](\w+)[\"']|import\.meta\.env\.(\w+)"
+    r"|System\.getenv\(\s*[\"'](\w+)[\"']|@Value\(\s*[\"']\$\{([\w.]+)"
+    r"|config(?:Service)?\.get(?:OrThrow)?(?:<[^>]*>)?\(\s*[\"'](\w+)[\"']"
 )
-EXCEPT_LINE = re.compile(r"^\s*(except\b[^:]*:|catch\s*\([^)]*\)\s*\{?)\s*$")
-SWALLOW = re.compile(r"^\s*(pass|continue|\.\.\.|\}?\s*)$")
+EXCEPT_LINE = re.compile(
+    r"^\s*\}?\s*(except\b[^:]*:|catch\s*(\([^)]*\)|\w+)?\s*\{?)\s*$"
+)
+SWALLOW = re.compile(r"^\s*(pass|continue|\.\.\.|return;?|\}?\s*)$")
 
 
 def _finding(severity, rule, message, path=None, line=None):
@@ -124,7 +156,10 @@ CLIENT_PATH = re.compile(
     r"\.dart$|\.(tsx|jsx)$|(^|/)(components|screens|pages|widgets|presentation)/"
 )
 
-LOOP_EXEMPT = re.compile(r"(^|/)tasks\.py$|/management/commands/|celery|(^|/)migrations?/")
+LOOP_EXEMPT = re.compile(
+    r"(^|/)tasks\.py$|/management/commands/|celery|(^|/)migrations?/"
+    r"|(^|/)(scripts|jobs|workers|seeds?|seeders)/|(Job|Scheduler|Seeder)\.(java|kt|ts|js)$"
+)
 
 
 def _risk(entry, cfg):
@@ -199,8 +234,8 @@ def _risk(entry, cfg):
             break
 
     # 4) lock + laco/IO pesado na mesma transacao
-    if "transaction.atomic" in added_text and has_lock and HEAVY_IO.search(added_text):
-        line = next((ln for ln, text in entry["added"] if "transaction.atomic" in text), None)
+    if TX_SCOPE.search(added_text) and has_lock and HEAVY_IO.search(added_text):
+        line = next((ln for ln, text in entry["added"] if TX_SCOPE.search(text)), None)
         out.append(_finding(
             "major", "transacao-longa",
             "Transacao com lock segurando laco/IO pesado: a requisicao prende a linha por "
@@ -236,7 +271,7 @@ def _risk(entry, cfg):
         previous = line if EXCEPT_LINE.match(text) else None
 
     # 7) lista de entrada sem limite de tamanho
-    if "serializer" in path.lower() or "schema" in path.lower():
+    if re.search(r"serializer|schema|dto|request|payload|validator", path.lower()):
         for line, text in entry["added"]:
             if LIST_FIELD.search(text) and not LIST_BOUND.search(text):
                 out.append(_finding(

@@ -1,0 +1,78 @@
+{
+  "standards_files": [
+    "projeto-geral.md",
+    "java-spring.md"
+  ],
+  "rules": {
+    "require_tests": {
+      "source_regex": "src/main/java/.*\\.java$",
+      "test_regex": "src/test/java/|(Test|Tests|IT)\\.java$",
+      "severity": "major"
+    },
+    "ignore_paths": [
+      "^gradlew(\\.bat)?$",
+      "(^|/)gradle/wrapper/",
+      "(^|/)target/",
+      "(^|/)build/",
+      "\\.min\\.(js|css)$"
+    ],
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "System\\.(out|err)\\.print|\\.printStackTrace\\(",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)src/test/java/",
+          "(Test|Tests|IT)\\.java$"
+        ]
+      },
+      {
+        "name": "jpql-concatenado",
+        "regex": "(createQuery|createNativeQuery|jdbcTemplate\\.(query|update|execute))\\s*\\(\\s*([\"'][^\"']*[\"']\\s*\\+|\\w+\\s*\\+\\s*[\"']|String\\.format\\()",
+        "severity": "blocker"
+      },
+      {
+        "name": "fetch-eager",
+        "regex": "FetchType\\.EAGER",
+        "severity": "major"
+      },
+      {
+        "name": "entidade-exposta",
+        "regex": "@(RequestBody|ResponseBody)\\s+\\w*Entity\\b",
+        "severity": "major"
+      },
+      {
+        "name": "transacional-no-controller",
+        "regex": "@Transactional",
+        "severity": "major",
+        "only_paths": [
+          "(Controller|Resource)\\.java$",
+          "(^|/)(controller|web)/"
+        ]
+      },
+      {
+        "name": "auth-desligada",
+        "regex": "permitAll\\(\\)|csrf\\(\\)\\.disable|setHostnameVerifier|TrustAllCerts|checkServerTrusted\\s*\\([^)]*\\)\\s*\\{\\s*\\}",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)src/test/java/",
+          "(Test|Tests|IT)\\.java$"
+        ]
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(api[_-]?key|secret|password|passwd|token)\\s*=\\s*\"[^\"\\s$]{12,}\"",
+        "severity": "blocker",
+        "skip_paths": [
+          "(^|/)src/test/java/",
+          "(Test|Tests|IT)\\.java$"
+        ]
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<{7}|>{7})( |$)",
+        "severity": "blocker"
+      }
+    ]
+  }
+}

@@ -216,6 +216,7 @@ def diff_patterns(diff_text, cfg):
             re.compile(p["regex"]),
             p.get("severity", "major"),
             [re.compile(x) for x in p.get("skip_paths", [])],
+            [re.compile(x) for x in p.get("only_paths", [])],
         )
         for p in patterns
     ]
@@ -237,11 +238,14 @@ def diff_patterns(diff_text, cfg):
             continue
         if raw.startswith("+"):
             content = raw[1:]
-            for name, regex, severity, skip in compiled:
+            for name, regex, severity, skip, only in compiled:
                 if not regex.search(content):
                     continue
                 # senha de fixture em teste nao e segredo: nao gastar bloqueante com isso
                 if path and any(r.search(path) for r in skip):
+                    continue
+                # regra que so vale em uma camada (ex.: @Transactional em controller)
+                if only and not (path and any(r.search(path) for r in only)):
                     continue
                 key = (path, name)
                 count = hits.get(key, 0)

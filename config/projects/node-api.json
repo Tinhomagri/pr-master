@@ -1,0 +1,82 @@
+{
+  "standards_files": [
+    "projeto-geral.md",
+    "node-api.md"
+  ],
+  "rules": {
+    "require_tests": {
+      "source_regex": "^(src|app|lib)/.*\\.(ts|js)$",
+      "test_regex": "(^|/)(tests?|__tests__)/|\\.(test|spec)\\.[tj]s$",
+      "severity": "major"
+    },
+    "ignore_paths": [
+      "^package-lock\\.json$",
+      "^yarn\\.lock$",
+      "^pnpm-lock\\.yaml$",
+      "^dist/",
+      "^build/",
+      "^coverage/",
+      "\\.min\\.(js|css)$"
+    ],
+    "forbidden_diff_patterns": [
+      {
+        "name": "debug-leftover",
+        "regex": "console\\.(log|debug|dir)\\(|debugger;",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|__tests__)/",
+          "\\.(test|spec)\\.[tj]s$",
+          "(^|/)scripts/"
+        ]
+      },
+      {
+        "name": "any-explicito",
+        "regex": ":\\s*any\\b|as any\\b",
+        "severity": "major"
+      },
+      {
+        "name": "ts-ignore",
+        "regex": "@ts-(ignore|nocheck)",
+        "severity": "major"
+      },
+      {
+        "name": "sql-concatenado",
+        "regex": "(\\$queryRawUnsafe|\\$executeRawUnsafe)\\s*\\(|(query|raw)\\s*\\(\\s*`[^`]*\\$\\{|(query|raw)\\s*\\(\\s*([\"'][^\"']*[\"']\\s*\\+|\\w+\\s*\\+\\s*[\"'])",
+        "severity": "blocker"
+      },
+      {
+        "name": "test-focado",
+        "regex": "(describe|it|test)\\.only\\(|(it|test)\\.skip\\(",
+        "severity": "major"
+      },
+      {
+        "name": "auth-desligada",
+        "regex": "rejectUnauthorized\\s*:\\s*false|NODE_TLS_REJECT_UNAUTHORIZED|cors\\(\\s*\\{[^}]*origin\\s*:\\s*[\"']\\*[\"']",
+        "severity": "major",
+        "skip_paths": [
+          "(^|/)(tests?|__tests__)/",
+          "\\.(test|spec)\\.[tj]s$"
+        ]
+      },
+      {
+        "name": "possivel-segredo",
+        "regex": "(?i)(api[_-]?key|secret|password|passwd|token|authorization)\\s*[:=]\\s*[\"'`][^\"'`\\s$]{12,}[\"'`]",
+        "severity": "blocker",
+        "skip_paths": [
+          "(^|/)(tests?|__tests__)/",
+          "\\.(test|spec)\\.[tj]s$"
+        ]
+      },
+      {
+        "name": "url-hardcoded",
+        "regex": "https?://(localhost|127\\.0\\.0\\.1|\\d+\\.\\d+\\.\\d+\\.\\d+)",
+        "severity": "major"
+      },
+      {
+        "name": "conflito-nao-resolvido",
+        "regex": "^(<{7}|>{7})( |$)",
+        "severity": "blocker"
+      }
+    ]
+  }
+}
